@@ -8,7 +8,16 @@ const localStorageMiddleware = (store) => (next) => (action) => {
     if (status !== 'loading') {
       localStorage.setItem('nexusai_messages', JSON.stringify(messages));
     }
-  } catch { /* quota exceeded — silently ignore */ }
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'QuotaExceededError') {
+      // Storage full — remove oldest messages and retry once
+      try {
+        const { messages } = store.getState().chat;
+        const trimmed = messages.slice(-20);
+        localStorage.setItem('nexusai_messages', JSON.stringify(trimmed));
+      } catch { /* still full — silently give up */ }
+    }
+  }
   return result;
 };
 

@@ -21,11 +21,12 @@ export const useSpeechRecognition = (onResult) => {
   // Stop and clean up recognition on unmount
   useEffect(() => {
     return () => {
-      if (recogRef.current) {
-        recogRef.current.onresult = null;
-        recogRef.current.onend = null;
-        recogRef.current.onerror = null;
-        recogRef.current.abort();
+      const r = recogRef.current;
+      if (r) {
+        r.onresult = null;
+        r.onend = null;
+        r.onerror = null;
+        try { r.abort(); } catch { /* already stopped */ }
         recogRef.current = null;
       }
     };
