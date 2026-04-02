@@ -17,6 +17,20 @@ export const useSpeechRecognition = (onResult) => {
   const [supported] = useState(
     () => 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window
   );
+
+  // Stop and clean up recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (recogRef.current) {
+        recogRef.current.onresult = null;
+        recogRef.current.onend = null;
+        recogRef.current.onerror = null;
+        recogRef.current.abort();
+        recogRef.current = null;
+      }
+    };
+  }, []);
+
   const start = useCallback(() => {
     if (!supported) return;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -27,6 +41,14 @@ export const useSpeechRecognition = (onResult) => {
     r.onerror = () => setListening(false);
     recogRef.current = r; r.start(); setListening(true);
   }, [supported, onResult]);
-  const stop = useCallback(() => { recogRef.current?.stop(); setListening(false); }, []);
+
+  const stop = useCallback(() => {
+    if (recogRef.current) {
+      recogRef.current.stop();
+      recogRef.current = null;
+    }
+    setListening(false);
+  }, []);
+
   return { listening, supported, start, stop };
 };
