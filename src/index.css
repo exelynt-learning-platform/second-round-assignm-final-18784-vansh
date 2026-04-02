@@ -53,68 +53,49 @@ html, body, #root {
 .chat-scroll * { min-width: 0; max-width: 100%; word-break: break-word; }
 .chat-scroll pre { word-break: normal; white-space: pre; overflow-x: auto; }
 
-/* ── Message animation ──────────────────────────────────────────────────── */
+/* ── Message animation — only opacity+transform, GPU composited ─────────── */
 @keyframes fadeSlideUp {
-  0%   { opacity: 0; transform: translateY(12px) scale(0.98); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .message-animate {
-  animation: fadeSlideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  will-change: opacity, transform;
+  animation: fadeSlideUp 0.2s ease-out forwards;
   contain: layout style;
+  /* will-change applied only during animation via the keyframe itself */
 }
 
-/* ── Orbit spinner (typing indicator) ──────────────────────────────────── */
+/* ── Orbit spinner ──────────────────────────────────────────────────────── */
 .orbit-spinner {
-  position: relative;
-  width: 22px;
-  height: 14px;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 4px;
 }
 .orbit-spinner span {
-  width: 6px;
-  height: 6px;
+  width: 6px; height: 6px;
   border-radius: 50%;
   display: inline-block;
   animation: orbit-bounce 1.4s infinite ease-in-out both;
-  will-change: transform, opacity;
 }
-.orbit-spinner span:nth-child(1) {
-  background: rgba(139, 92, 246, 0.9);
-  animation-delay: -0.32s;
-}
-.orbit-spinner span:nth-child(2) {
-  background: rgba(99, 102, 241, 0.9);
-  animation-delay: -0.16s;
-}
-.orbit-spinner span:nth-child(3) {
-  background: rgba(167, 139, 250, 0.9);
-  animation-delay: 0s;
-}
+.orbit-spinner span:nth-child(1) { background: rgba(139,92,246,0.9); animation-delay: -0.32s; }
+.orbit-spinner span:nth-child(2) { background: rgba(99,102,241,0.9); animation-delay: -0.16s; }
+.orbit-spinner span:nth-child(3) { background: rgba(167,139,250,0.9); animation-delay: 0s; }
 @keyframes orbit-bounce {
-  0%, 80%, 100% { transform: scale(0.5) translateY(0);   opacity: 0.4; }
-  40%           { transform: scale(1.2) translateY(-4px); opacity: 1;   }
+  0%, 80%, 100% { transform: scale(0.5) translateY(0);    opacity: 0.4; }
+  40%           { transform: scale(1.2) translateY(-4px);  opacity: 1;   }
 }
 
-/* ── Status glow (online dot) ───────────────────────────────────────────── */
-.status-glow {
-  box-shadow: 0 0 6px 2px rgba(52, 211, 153, 0.5);
-  animation: glow-pulse 2.5s infinite ease-in-out;
-}
+/* ── Status glow — box-shadow only, no layout cost ─────────────────────── */
+.status-glow { animation: glow-pulse 2.5s infinite ease-in-out; }
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 4px 1px rgba(52, 211, 153, 0.4); }
-  50%       { box-shadow: 0 0 10px 3px rgba(52, 211, 153, 0.7); }
+  0%, 100% { box-shadow: 0 0 4px 1px rgba(52,211,153,0.4); }
+  50%       { box-shadow: 0 0 8px 2px rgba(52,211,153,0.7); }
 }
 
 /* ── Mic pulse ring ─────────────────────────────────────────────────────── */
 .mic-pulse-ring {
-  width: 10px;
-  height: 10px;
+  width: 10px; height: 10px;
   border-radius: 50%;
-  background: rgba(239, 68, 68, 0.8);
+  background: rgba(239,68,68,0.8);
   position: relative;
   flex-shrink: 0;
 }
@@ -124,7 +105,7 @@ html, body, #root {
   position: absolute;
   inset: -4px;
   border-radius: 50%;
-  border: 2px solid rgba(239, 68, 68, 0.5);
+  border: 2px solid rgba(239,68,68,0.5);
   animation: mic-ring 1.5s infinite ease-out;
 }
 .mic-pulse-ring::after { animation-delay: 0.5s; }
@@ -133,17 +114,9 @@ html, body, #root {
   100% { transform: scale(2.2); opacity: 0; }
 }
 
-/* ── Mic button active glow ─────────────────────────────────────────────── */
-.mic-active {
-  animation: mic-glow 1s infinite alternate ease-in-out;
-}
+/* ── Mic active glow ────────────────────────────────────────────────────── */
+.mic-active { animation: mic-glow 1s infinite alternate ease-in-out; }
 @keyframes mic-glow {
-  from { box-shadow: 0 0 6px 1px rgba(239, 68, 68, 0.3); }
-  to   { box-shadow: 0 0 14px 4px rgba(239, 68, 68, 0.6); }
-}
-
-/* ── Shimmer on send button hover ───────────────────────────────────────── */
-@keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position:  200% center; }
+  from { box-shadow: 0 0 6px 1px rgba(239,68,68,0.3); }
+  to   { box-shadow: 0 0 12px 3px rgba(239,68,68,0.6); }
 }

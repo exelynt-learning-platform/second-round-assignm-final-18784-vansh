@@ -45,9 +45,8 @@ export const sendMessage = createAsyncThunk(
   'chat/sendMessage',
   async ({ userText, sessionId }, { rejectWithValue }) => {
     try {
-      const API_URL = import.meta.env.DEV
-        ? '/api/Stage/'
-        : (import.meta.env.VITE_API_URL ?? 'https://kh7lvyb2b2.execute-api.us-east-1.amazonaws.com/Stage/');
+      const API_URL = import.meta.env.VITE_API_URL;
+      if (!API_URL) return rejectWithValue('API endpoint is not configured.');
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
