@@ -1,52 +1,149 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-* {
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+* { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
-/* Smooth custom scrollbar */
-.chat-scroll::-webkit-scrollbar { width: 5px; }
-.chat-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
-.chat-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-.chat-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-/* GPU-accelerated scroll container — prevents layout thrashing on long conversations */
-.chat-scroll {
-  will-change: scroll-position;
-  -webkit-overflow-scrolling: touch; /* smooth momentum scroll on iOS */
+/* ── App background ─────────────────────────────────────────────────────── */
+.bg-app {
+  background: #0a0a0f;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 20% 0%, rgba(124, 58, 237, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(99, 102, 241, 0.10) 0%, transparent 60%);
+  height: 100%;
 }
 
-/* Message animation — GPU composited (opacity + transform only, no layout triggers) */
+/* ── Glassmorphism surfaces ─────────────────────────────────────────────── */
+.sidebar-glass {
+  background: rgba(15, 15, 25, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.glass-bubble {
+  background: rgba(30, 30, 50, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+.input-glass {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.input-glass:focus {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────── */
+.chat-scroll::-webkit-scrollbar { width: 4px; }
+.chat-scroll::-webkit-scrollbar-track { background: transparent; }
+.chat-scroll::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.2); border-radius: 10px; }
+.chat-scroll::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.4); }
+.chat-scroll { will-change: scroll-position; -webkit-overflow-scrolling: touch; }
+.chat-scroll * { min-width: 0; max-width: 100%; word-break: break-word; }
+.chat-scroll pre { word-break: normal; white-space: pre; overflow-x: auto; }
+
+/* ── Message animation ──────────────────────────────────────────────────── */
 @keyframes fadeSlideUp {
-  0%   { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0%   { opacity: 0; transform: translateY(12px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 .message-animate {
-  animation: fadeSlideUp 0.2s ease-out forwards;
-  /* Promote to own layer so animation doesn't repaint other elements */
+  animation: fadeSlideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   will-change: opacity, transform;
-  /* Contain layout so each bubble doesn't affect siblings during animation */
   contain: layout style;
 }
 
-/* Loading dots spinner */
-.loader-dots { display: inline-flex; gap: 5px; align-items: center; }
-.loader-dots span {
-  width: 7px;
-  height: 7px;
-  background-color: #94a3b8;
+/* ── Orbit spinner (typing indicator) ──────────────────────────────────── */
+.orbit-spinner {
+  position: relative;
+  width: 22px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.orbit-spinner span {
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   display: inline-block;
-  animation: bounce-dot 1.2s infinite ease-in-out both;
+  animation: orbit-bounce 1.4s infinite ease-in-out both;
   will-change: transform, opacity;
 }
-.loader-dots span:nth-child(1) { animation-delay: -0.32s; }
-.loader-dots span:nth-child(2) { animation-delay: -0.16s; }
-.loader-dots span:nth-child(3) { animation-delay: 0s; }
+.orbit-spinner span:nth-child(1) {
+  background: rgba(139, 92, 246, 0.9);
+  animation-delay: -0.32s;
+}
+.orbit-spinner span:nth-child(2) {
+  background: rgba(99, 102, 241, 0.9);
+  animation-delay: -0.16s;
+}
+.orbit-spinner span:nth-child(3) {
+  background: rgba(167, 139, 250, 0.9);
+  animation-delay: 0s;
+}
+@keyframes orbit-bounce {
+  0%, 80%, 100% { transform: scale(0.5) translateY(0);   opacity: 0.4; }
+  40%           { transform: scale(1.2) translateY(-4px); opacity: 1;   }
+}
 
-@keyframes bounce-dot {
-  0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
-  40%           { transform: scale(1);   opacity: 1; }
+/* ── Status glow (online dot) ───────────────────────────────────────────── */
+.status-glow {
+  box-shadow: 0 0 6px 2px rgba(52, 211, 153, 0.5);
+  animation: glow-pulse 2.5s infinite ease-in-out;
+}
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 4px 1px rgba(52, 211, 153, 0.4); }
+  50%       { box-shadow: 0 0 10px 3px rgba(52, 211, 153, 0.7); }
+}
+
+/* ── Mic pulse ring ─────────────────────────────────────────────────────── */
+.mic-pulse-ring {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.8);
+  position: relative;
+  flex-shrink: 0;
+}
+.mic-pulse-ring::before,
+.mic-pulse-ring::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid rgba(239, 68, 68, 0.5);
+  animation: mic-ring 1.5s infinite ease-out;
+}
+.mic-pulse-ring::after { animation-delay: 0.5s; }
+@keyframes mic-ring {
+  0%   { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* ── Mic button active glow ─────────────────────────────────────────────── */
+.mic-active {
+  animation: mic-glow 1s infinite alternate ease-in-out;
+}
+@keyframes mic-glow {
+  from { box-shadow: 0 0 6px 1px rgba(239, 68, 68, 0.3); }
+  to   { box-shadow: 0 0 14px 4px rgba(239, 68, 68, 0.6); }
+}
+
+/* ── Shimmer on send button hover ───────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
 }

@@ -1,17 +1,19 @@
 import { configureStore } from '@reduxjs/toolkit';
 import chatReducer from '../features/chat/chatSlice';
 
+const localStorageMiddleware = (store) => (next) => (action) => {
+  const result = next(action);
+  try {
+    const { status, error, ...persistable } = store.getState().chat;
+    localStorage.setItem('nexusai_state', JSON.stringify(persistable));
+  } catch { /* quota exceeded — silently ignore */ }
+  return result;
+};
+
 const store = configureStore({
-  reducer: {
-    chat: chatReducer,
-  },
-  // getDefaultMiddleware includes redux-thunk by default (handles async API calls)
-  // serializableCheck warns if non-serializable values enter the store
+  reducer: { chat: chatReducer },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: true,
-    }),
-  // Redux DevTools enabled only in development for debugging
+    getDefaultMiddleware({ serializableCheck: true }).concat(localStorageMiddleware),
   devTools: import.meta.env.DEV,
 });
 
