@@ -49,11 +49,11 @@ html, body, #root {
 .chat-scroll::-webkit-scrollbar-track { background: transparent; }
 .chat-scroll::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.2); border-radius: 10px; }
 .chat-scroll::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.4); }
-.chat-scroll { will-change: scroll-position; -webkit-overflow-scrolling: touch; }
+.chat-scroll { -webkit-overflow-scrolling: touch; }
 .chat-scroll * { min-width: 0; max-width: 100%; word-break: break-word; }
 .chat-scroll pre { word-break: normal; white-space: pre; overflow-x: auto; }
 
-/* ── Message animation — only opacity+transform, GPU composited ─────────── */
+/* ── Message animation ──────────────────────────────────────────────────── */
 @keyframes fadeSlideUp {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -61,7 +61,6 @@ html, body, #root {
 .message-animate {
   animation: fadeSlideUp 0.2s ease-out forwards;
   contain: layout style;
-  /* will-change applied only during animation via the keyframe itself */
 }
 
 /* ── Orbit spinner ──────────────────────────────────────────────────────── */
@@ -80,11 +79,11 @@ html, body, #root {
 .orbit-spinner span:nth-child(2) { background: rgba(99,102,241,0.9); animation-delay: -0.16s; }
 .orbit-spinner span:nth-child(3) { background: rgba(167,139,250,0.9); animation-delay: 0s; }
 @keyframes orbit-bounce {
-  0%, 80%, 100% { transform: scale(0.5) translateY(0);    opacity: 0.4; }
-  40%           { transform: scale(1.2) translateY(-4px);  opacity: 1;   }
+  0%, 80%, 100% { transform: scale(0.5) translateY(0);   opacity: 0.4; }
+  40%           { transform: scale(1.2) translateY(-4px); opacity: 1;   }
 }
 
-/* ── Status glow — box-shadow only, no layout cost ─────────────────────── */
+/* ── Status glow ────────────────────────────────────────────────────────── */
 .status-glow { animation: glow-pulse 2.5s infinite ease-in-out; }
 @keyframes glow-pulse {
   0%, 100% { box-shadow: 0 0 4px 1px rgba(52,211,153,0.4); }

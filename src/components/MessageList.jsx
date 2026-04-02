@@ -11,7 +11,6 @@ const mdComponents = {
   h1:     ({ children }) => <h1 className="font-bold text-base mb-1 text-violet-300">{children}</h1>,
   h2:     ({ children }) => <h2 className="font-bold text-sm mb-1 text-violet-300">{children}</h2>,
   h3:     ({ children }) => <h3 className="font-semibold text-sm mb-1 text-violet-300">{children}</h3>,
-  // react-markdown v10: use 'code' for inline, 'pre' wraps block code
   code:   ({ children }) => (
     <code className="bg-slate-800 text-emerald-400 px-1.5 py-0.5 rounded text-xs font-mono break-all">
       {children}
