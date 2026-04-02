@@ -7,7 +7,9 @@ const loadMessages = () => {
   try {
     const raw = localStorage.getItem('nexusai_messages');
     return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 };
 
 const initialState = {
@@ -16,12 +18,24 @@ const initialState = {
   error: null,
 };
 
+const parseAnswer = (data) => {
+  if (!data || typeof data !== 'object') return 'Unexpected response format from server.';
+  const raw = data.body ?? data.answer ?? data.message ?? data.response ?? data.text ?? '';
+  if (typeof raw !== 'string') return raw != null ? String(raw) : 'No response received.';
+  try {
+    const parsed = JSON.parse(raw);
+    return typeof parsed === 'string' ? parsed : JSON.stringify(parsed);
+  } catch {
+    return raw.replace(/^"|"$/g, '').replace(/\\n/g, '\n').replace(/\\t/g, '\t') || raw;
+  }
+};
+
 export const sendMessage = createAsyncThunk(
   'chat/sendMessage',
   async (userText, { rejectWithValue }) => {
+    const API_URL = import.meta.env.VITE_API_URL;
+    if (!API_URL) return rejectWithValue('API endpoint is not configured.');
     try {
-      const API_URL = import.meta.env.VITE_API_URL;
-      if (!API_URL) return rejectWithValue('API endpoint is not configured.');
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -29,16 +43,14 @@ export const sendMessage = createAsyncThunk(
       });
       if (!response.ok)
         return rejectWithValue(`Request failed: ${response.status} ${response.statusText}`);
-      const data = await response.json();
-      const raw = data.body ?? data.answer ?? data.message ?? data.response ?? '';
-      if (typeof raw !== 'string') return String(raw);
+      let data;
       try {
-        const parsed = JSON.parse(raw);
-        return typeof parsed === 'string' ? parsed : JSON.stringify(parsed);
+        data = await response.json();
       } catch {
-        return raw.replace(/^"|"$/g, '').replace(/\\n/g, '\n').replace(/\\t/g, '\t') || raw;
+        return rejectWithValue('Invalid response from server. Please try again.');
       }
-    } catch (err) {
+      return parseAnswer(data);
+    } catch {
       return rejectWithValue('Network error. Please check your internet connection and try again.');
     }
   }
@@ -61,7 +73,9 @@ const chatSlice = createSlice({
       state.messages = [];
       state.error = null;
     },
-    clearError: (state) => { state.error = null; },
+    clearError: (state) => {
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder

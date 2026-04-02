@@ -2,6 +2,28 @@ import React, { useRef, useEffect, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Sparkles, User } from 'lucide-react';
 
+const mdComponents = {
+  p:      ({ children }) => <p className="mb-2 last:mb-0 break-words">{children}</p>,
+  strong: ({ children }) => <strong className="font-bold text-violet-300">{children}</strong>,
+  ol:     ({ children }) => <ol className="list-decimal ml-4 space-y-1 my-2">{children}</ol>,
+  ul:     ({ children }) => <ul className="list-disc ml-4 space-y-1 my-2">{children}</ul>,
+  li:     ({ children }) => <li className="leading-snug break-words">{children}</li>,
+  h1:     ({ children }) => <h1 className="font-bold text-base mb-1 text-violet-300">{children}</h1>,
+  h2:     ({ children }) => <h2 className="font-bold text-sm mb-1 text-violet-300">{children}</h2>,
+  h3:     ({ children }) => <h3 className="font-semibold text-sm mb-1 text-violet-300">{children}</h3>,
+  // react-markdown v10: use 'code' for inline, 'pre' wraps block code
+  code:   ({ children }) => (
+    <code className="bg-slate-800 text-emerald-400 px-1.5 py-0.5 rounded text-xs font-mono break-all">
+      {children}
+    </code>
+  ),
+  pre:    ({ children }) => (
+    <pre className="bg-slate-900 text-emerald-400 p-3 rounded-lg text-xs font-mono overflow-x-auto whitespace-pre my-2 max-w-full">
+      {children}
+    </pre>
+  ),
+};
+
 const MessageBubble = memo(({ msg }) => (
   <div className={`flex items-end gap-2 message-animate ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
     {msg.role === 'assistant' && (
@@ -16,19 +38,7 @@ const MessageBubble = memo(({ msg }) => (
     }`}>
       {msg.role === 'assistant' ? (
         <>
-          <ReactMarkdown components={{
-            p: ({ children }) => <p className="mb-2 last:mb-0 break-words">{children}</p>,
-            strong: ({ children }) => <strong className="font-bold text-violet-300">{children}</strong>,
-            ol: ({ children }) => <ol className="list-decimal ml-4 space-y-1 my-2">{children}</ol>,
-            ul: ({ children }) => <ul className="list-disc ml-4 space-y-1 my-2">{children}</ul>,
-            li: ({ children }) => <li className="leading-snug break-words">{children}</li>,
-            h1: ({ children }) => <h1 className="font-bold text-base mb-1 text-violet-300">{children}</h1>,
-            h2: ({ children }) => <h2 className="font-bold text-sm mb-1 text-violet-300">{children}</h2>,
-            h3: ({ children }) => <h3 className="font-semibold text-sm mb-1 text-violet-300">{children}</h3>,
-            code: ({ inline, children }) => inline
-              ? <code className="bg-slate-800 text-emerald-400 px-1.5 py-0.5 rounded text-xs font-mono break-all">{children}</code>
-              : <pre className="bg-slate-900 text-emerald-400 p-3 rounded-lg text-xs font-mono overflow-x-auto whitespace-pre my-2 max-w-full"><code>{children}</code></pre>,
-          }}>{msg.content}</ReactMarkdown>
+          <ReactMarkdown components={mdComponents}>{msg.content}</ReactMarkdown>
           <span className="block text-[10px] mt-1.5 text-slate-400">{msg.timestamp}</span>
         </>
       ) : (

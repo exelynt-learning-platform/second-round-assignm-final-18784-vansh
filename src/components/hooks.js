@@ -4,11 +4,19 @@ export const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
-    const h = (e) => setIsMobile(e.matches);
-    mq.addEventListener('change', h);
-    return () => mq.removeEventListener('change', h);
+    const handler = (e) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
   }, []);
   return isMobile;
+};
+
+const cleanupRecognition = (r) => {
+  if (!r) return;
+  r.onresult = null;
+  r.onend = null;
+  r.onerror = null;
+  try { r.abort(); } catch { /* already stopped */ }
 };
 
 export const useSpeechRecognition = (onResult) => {
@@ -18,29 +26,27 @@ export const useSpeechRecognition = (onResult) => {
     () => 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window
   );
 
-  // Stop and clean up recognition on unmount
   useEffect(() => {
     return () => {
-      const r = recogRef.current;
-      if (r) {
-        r.onresult = null;
-        r.onend = null;
-        r.onerror = null;
-        try { r.abort(); } catch { /* already stopped */ }
-        recogRef.current = null;
-      }
+      cleanupRecognition(recogRef.current);
+      recogRef.current = null;
     };
   }, []);
 
   const start = useCallback(() => {
     if (!supported) return;
+    cleanupRecognition(recogRef.current);
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const r = new SR();
-    r.lang = 'en-US'; r.interimResults = false; r.maxAlternatives = 1;
+    r.lang = 'en-US';
+    r.interimResults = false;
+    r.maxAlternatives = 1;
     r.onresult = (e) => onResult(e.results[0][0].transcript);
     r.onend = () => setListening(false);
     r.onerror = () => setListening(false);
-    recogRef.current = r; r.start(); setListening(true);
+    recogRef.current = r;
+    r.start();
+    setListening(true);
   }, [supported, onResult]);
 
   const stop = useCallback(() => {
