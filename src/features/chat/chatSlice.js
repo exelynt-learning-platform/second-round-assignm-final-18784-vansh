@@ -30,16 +30,14 @@ export const sendMessage = createAsyncThunk(
       if (!response.ok)
         return rejectWithValue(`Request failed: ${response.status} ${response.statusText}`);
       const data = await response.json();
-      let answer = data.body;
-      if (typeof answer === 'string') {
-        try {
-          const parsed = JSON.parse(answer);
-          answer = typeof parsed === 'string' ? parsed : JSON.stringify(parsed);
-        } catch {
-          answer = answer.replace(/^\"|\"$/g, '').replace(/\\n/g, '\n').replace(/\\t/g, '\t');
-        }
+      const raw = data.body ?? data.answer ?? data.message ?? data.response ?? '';
+      if (typeof raw !== 'string') return String(raw);
+      try {
+        const parsed = JSON.parse(raw);
+        return typeof parsed === 'string' ? parsed : JSON.stringify(parsed);
+      } catch {
+        return raw.replace(/^"|"$/g, '').replace(/\\n/g, '\n').replace(/\\t/g, '\t') || raw;
       }
-      return answer;
     } catch (err) {
       return rejectWithValue('Network error. Please check your internet connection and try again.');
     }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { sendMessage, addUserMessage, clearChat, clearError } from '../features/chat/chatSlice';
 import { useIsMobile } from './hooks';

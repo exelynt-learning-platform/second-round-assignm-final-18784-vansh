@@ -1,28 +1,6 @@
-import React, { useRef, useEffect, useState, useCallback, memo } from 'react';
+import React, { useRef, useEffect, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Sparkles, User, Copy, Check } from 'lucide-react';
-
-const CopyButton = ({ text }) => {
-  const [copied, setCopied] = useState(false);
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }, [text]);
-  return (
-    <button
-      onClick={handleCopy}
-      title={copied ? 'Copied!' : 'Copy response'}
-      className={`flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg transition-colors duration-150 mt-2 ${
-        copied ? 'text-emerald-400 bg-emerald-400/10' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
-      }`}
-    >
-      {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-      {copied ? 'Copied!' : 'Copy'}
-    </button>
-  );
-};
+import { Sparkles, User } from 'lucide-react';
 
 const MessageBubble = memo(({ msg }) => (
   <div className={`flex items-end gap-2 message-animate ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -51,10 +29,7 @@ const MessageBubble = memo(({ msg }) => (
               ? <code className="bg-slate-800 text-emerald-400 px-1.5 py-0.5 rounded text-xs font-mono break-all">{children}</code>
               : <pre className="bg-slate-900 text-emerald-400 p-3 rounded-lg text-xs font-mono overflow-x-auto whitespace-pre my-2 max-w-full"><code>{children}</code></pre>,
           }}>{msg.content}</ReactMarkdown>
-          <div className="flex items-center justify-between mt-1">
-            <span className="text-[10px] text-slate-400">{msg.timestamp}</span>
-            <CopyButton text={msg.content} />
-          </div>
+          <span className="block text-[10px] mt-1.5 text-slate-400">{msg.timestamp}</span>
         </>
       ) : (
         <>
