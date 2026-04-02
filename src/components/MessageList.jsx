@@ -70,6 +70,7 @@ const MessageBubble = memo(({ msg }) => (
     )}
   </div>
 ), (prev, next) => prev.msg.id === next.msg.id && prev.msg.content === next.msg.content);
+MessageBubble.displayName = 'MessageBubble';
 
 const TypingIndicator = () => (
   <div className="flex items-end gap-2 justify-start message-animate">

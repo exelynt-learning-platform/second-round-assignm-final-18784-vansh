@@ -14,9 +14,10 @@ const InputArea = ({ input, setInput, onSend, status, isMobile }) => {
 
   const handleInput = useCallback((e) => {
     setInput(e.target.value);
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+    const el = textareaRef.current;
+    if (el) {
+      el.style.height = 'auto';
+      el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
     }
   }, [setInput]);
 

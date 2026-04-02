@@ -1,167 +1,71 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { configureStore } from '@reduxjs/toolkit';
 import chatReducer, {
-  addUserMessage, newChat, switchSession,
-  deleteSession, clearError, sendMessage,
+  addUserMessage, clearChat, clearError, sendMessage,
 } from '../../features/chat/chatSlice';
 
-// ── helpers ──────────────────────────────────────────────────────────────────
 const makeStore = (preloadedState) =>
   configureStore({ reducer: { chat: chatReducer }, preloadedState });
 
-const makeSession = (id = '1') => ({
-  id,
-  title: 'New Chat',
-  createdAt: 1000,
-  messages: [],
-});
-
 const baseState = () => ({
-  chat: {
-    sessions: { '1': makeSession('1') },
-    currentSessionId: '1',
-    status: 'idle',
-    error: null,
-  },
+  chat: { messages: [], status: 'idle', error: null },
 });
 
-// ── reducer: addUserMessage ───────────────────────────────────────────────────
+// ── addUserMessage ────────────────────────────────────────────────────────────
 describe('addUserMessage', () => {
-  it('adds a user message to the correct session', () => {
+  it('adds a user message', () => {
     const store = makeStore(baseState());
-    store.dispatch(addUserMessage({ text: 'Hello', sessionId: '1' }));
-    const msgs = store.getState().chat.sessions['1'].messages;
+    store.dispatch(addUserMessage('Hello'));
+    const msgs = store.getState().chat.messages;
     expect(msgs).toHaveLength(1);
     expect(msgs[0].role).toBe('user');
     expect(msgs[0].content).toBe('Hello');
   });
 
-  it('sets title from first message (short text)', () => {
+  it('message has id and timestamp', () => {
     const store = makeStore(baseState());
-    store.dispatch(addUserMessage({ text: 'What is React?', sessionId: '1' }));
-    expect(store.getState().chat.sessions['1'].title).toBe('What is React?');
-  });
-
-  it('sets title truncated at word boundary for long text', () => {
-    const store = makeStore(baseState());
-    const long = 'Write me a Python function that reads a CSV file and parses it';
-    store.dispatch(addUserMessage({ text: long, sessionId: '1' }));
-    const title = store.getState().chat.sessions['1'].title;
-    expect(title.length).toBeLessThanOrEqual(41);
-    expect(title.endsWith('…')).toBe(true);
-  });
-
-  it('sets title at sentence boundary', () => {
-    const store = makeStore(baseState());
-    store.dispatch(addUserMessage({ text: 'Explain Redux. Also tell me more about it.', sessionId: '1' }));
-    const title = store.getState().chat.sessions['1'].title;
-    expect(title).toBe('Explain Redux.');
-  });
-
-  it('does not update title on second message', () => {
-    const store = makeStore(baseState());
-    store.dispatch(addUserMessage({ text: 'First message', sessionId: '1' }));
-    store.dispatch(addUserMessage({ text: 'Second message', sessionId: '1' }));
-    expect(store.getState().chat.sessions['1'].title).toBe('First message');
+    store.dispatch(addUserMessage('Hi'));
+    const msg = store.getState().chat.messages[0];
+    expect(msg.id).toBeDefined();
+    expect(msg.timestamp).toBeDefined();
   });
 
   it('clears error on dispatch', () => {
     const state = baseState();
     state.chat.error = 'some error';
     const store = makeStore(state);
-    store.dispatch(addUserMessage({ text: 'Hi', sessionId: '1' }));
+    store.dispatch(addUserMessage('Hi'));
     expect(store.getState().chat.error).toBeNull();
   });
 
-  it('does nothing for unknown sessionId', () => {
+  it('appends multiple messages', () => {
     const store = makeStore(baseState());
-    store.dispatch(addUserMessage({ text: 'Hi', sessionId: 'unknown' }));
-    expect(store.getState().chat.sessions['1'].messages).toHaveLength(0);
+    store.dispatch(addUserMessage('First'));
+    store.dispatch(addUserMessage('Second'));
+    expect(store.getState().chat.messages).toHaveLength(2);
   });
 });
 
-// ── reducer: newChat ──────────────────────────────────────────────────────────
-describe('newChat', () => {
-  it('creates a new session and switches to it', () => {
-    const store = makeStore(baseState());
-    store.dispatch(newChat());
-    const state = store.getState().chat;
-    const ids = Object.keys(state.sessions);
-    expect(ids).toHaveLength(2);
-    expect(state.currentSessionId).not.toBe('1');
-  });
-
-  it('new session has title New Chat and empty messages', () => {
-    const store = makeStore(baseState());
-    store.dispatch(newChat());
-    const state = store.getState().chat;
-    const newSession = state.sessions[state.currentSessionId];
-    expect(newSession.title).toBe('New Chat');
-    expect(newSession.messages).toHaveLength(0);
-  });
-
-  it('resets status and error', () => {
+// ── clearChat ─────────────────────────────────────────────────────────────────
+describe('clearChat', () => {
+  it('clears all messages', () => {
     const state = baseState();
-    state.chat.status = 'loading';
+    state.chat.messages = [{ id: 1, role: 'user', content: 'Hi', timestamp: '10:00' }];
+    const store = makeStore(state);
+    store.dispatch(clearChat());
+    expect(store.getState().chat.messages).toHaveLength(0);
+  });
+
+  it('clears error', () => {
+    const state = baseState();
     state.chat.error = 'err';
     const store = makeStore(state);
-    store.dispatch(newChat());
-    expect(store.getState().chat.status).toBe('idle');
+    store.dispatch(clearChat());
     expect(store.getState().chat.error).toBeNull();
   });
 });
 
-// ── reducer: switchSession ────────────────────────────────────────────────────
-describe('switchSession', () => {
-  it('switches currentSessionId', () => {
-    const state = baseState();
-    state.chat.sessions['2'] = makeSession('2');
-    const store = makeStore(state);
-    store.dispatch(switchSession('2'));
-    expect(store.getState().chat.currentSessionId).toBe('2');
-  });
-
-  it('clears error and resets status on switch', () => {
-    const state = baseState();
-    state.chat.sessions['2'] = makeSession('2');
-    state.chat.error = 'err';
-    state.chat.status = 'loading';
-    const store = makeStore(state);
-    store.dispatch(switchSession('2'));
-    expect(store.getState().chat.error).toBeNull();
-    expect(store.getState().chat.status).toBe('idle');
-  });
-});
-
-// ── reducer: deleteSession ────────────────────────────────────────────────────
-describe('deleteSession', () => {
-  it('removes the session', () => {
-    const state = baseState();
-    state.chat.sessions['2'] = makeSession('2');
-    const store = makeStore(state);
-    store.dispatch(deleteSession('2'));
-    expect(store.getState().chat.sessions['2']).toBeUndefined();
-  });
-
-  it('switches to another session when active session is deleted', () => {
-    const state = baseState();
-    state.chat.sessions['2'] = makeSession('2');
-    state.chat.currentSessionId = '1';
-    const store = makeStore(state);
-    store.dispatch(deleteSession('1'));
-    expect(store.getState().chat.currentSessionId).toBe('2');
-  });
-
-  it('creates a new session when last session is deleted', () => {
-    const store = makeStore(baseState());
-    store.dispatch(deleteSession('1'));
-    const state = store.getState().chat;
-    expect(Object.keys(state.sessions)).toHaveLength(1);
-    expect(state.currentSessionId).toBeDefined();
-  });
-});
-
-// ── reducer: clearError ───────────────────────────────────────────────────────
+// ── clearError ────────────────────────────────────────────────────────────────
 describe('clearError', () => {
   it('sets error to null', () => {
     const state = baseState();
@@ -172,7 +76,7 @@ describe('clearError', () => {
   });
 });
 
-// ── async thunk: sendMessage ──────────────────────────────────────────────────
+// ── sendMessage thunk ─────────────────────────────────────────────────────────
 describe('sendMessage thunk', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -181,37 +85,31 @@ describe('sendMessage thunk', () => {
 
   it('sets status to loading on pending', () => {
     const store = makeStore(baseState());
-    store.dispatch(sendMessage.pending('', { userText: 'hi', sessionId: '1' }));
+    store.dispatch(sendMessage.pending('', 'hi'));
     expect(store.getState().chat.status).toBe('loading');
     expect(store.getState().chat.error).toBeNull();
   });
 
   it('adds assistant message and sets idle on fulfilled', () => {
     const store = makeStore(baseState());
-    store.dispatch(addUserMessage({ text: 'hi', sessionId: '1' }));
-    store.dispatch(sendMessage.fulfilled(
-      { answer: 'Hello there!', sessionId: '1' },
-      '',
-      { userText: 'hi', sessionId: '1' }
-    ));
+    store.dispatch(sendMessage.fulfilled('Hello there!', '', 'hi'));
     const state = store.getState().chat;
     expect(state.status).toBe('idle');
-    const msgs = state.sessions['1'].messages;
-    expect(msgs[msgs.length - 1].role).toBe('assistant');
-    expect(msgs[msgs.length - 1].content).toBe('Hello there!');
+    const last = state.messages[state.messages.length - 1];
+    expect(last.role).toBe('assistant');
+    expect(last.content).toBe('Hello there!');
   });
 
   it('sets error and idle on rejected', () => {
     const store = makeStore(baseState());
-    store.dispatch(sendMessage.rejected(null, '', {}, 'Network error'));
-    const state = store.getState().chat;
-    expect(state.status).toBe('idle');
-    expect(state.error).toBe('Network error');
+    store.dispatch(sendMessage.rejected(null, '', 'hi', 'Network error'));
+    expect(store.getState().chat.status).toBe('idle');
+    expect(store.getState().chat.error).toBe('Network error');
   });
 
-  it('uses fallback error message when payload is undefined', () => {
+  it('uses fallback error when payload is undefined', () => {
     const store = makeStore(baseState());
-    store.dispatch(sendMessage.rejected(null, '', {}, undefined));
+    store.dispatch(sendMessage.rejected(null, '', 'hi', undefined));
     expect(store.getState().chat.error).toBe('Something went wrong. Please try again.');
   });
 
@@ -220,12 +118,11 @@ describe('sendMessage thunk', () => {
       ok: true,
       status: 200,
       statusText: 'OK',
-      text: async () => JSON.stringify({ body: 'AI response' }),
-      headers: { entries: () => [] },
+      json: async () => ({ body: 'AI response' }),
     });
     const store = makeStore(baseState());
-    await store.dispatch(sendMessage({ userText: 'hello', sessionId: '1' }));
-    const msgs = store.getState().chat.sessions['1'].messages;
+    await store.dispatch(sendMessage('hello'));
+    const msgs = store.getState().chat.messages;
     const assistant = msgs.find((m) => m.role === 'assistant');
     expect(assistant).toBeDefined();
     expect(assistant.content).toBe('AI response');
@@ -236,28 +133,25 @@ describe('sendMessage thunk', () => {
       ok: false,
       status: 500,
       statusText: 'Internal Server Error',
-      text: async () => 'error body',
-      headers: { entries: () => [] },
+      json: async () => ({}),
     });
     const store = makeStore(baseState());
-    await store.dispatch(sendMessage({ userText: 'hello', sessionId: '1' }));
+    await store.dispatch(sendMessage('hello'));
     expect(store.getState().chat.error).toContain('500');
   });
 
-  it('rejects when fetch throws (network error)', async () => {
+  it('rejects when fetch throws', async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error('Failed to fetch'));
     const store = makeStore(baseState());
-    await store.dispatch(sendMessage({ userText: 'hello', sessionId: '1' }));
+    await store.dispatch(sendMessage('hello'));
     expect(store.getState().chat.error).toBeTruthy();
   });
 
   it('rejects when VITE_API_URL is not set', async () => {
-    const origFetch = global.fetch;
-    // Temporarily override env by mocking fetch to simulate missing URL scenario
-    global.fetch = vi.fn().mockRejectedValue(new Error('API endpoint is not configured.'));
+    vi.stubEnv('VITE_API_URL', '');
     const store = makeStore(baseState());
-    await store.dispatch(sendMessage({ userText: 'hello', sessionId: '1' }));
-    expect(store.getState().chat.error).toBeTruthy();
-    global.fetch = origFetch;
+    await store.dispatch(sendMessage('hello'));
+    expect(store.getState().chat.error).toBe('API endpoint is not configured.');
+    vi.stubEnv('VITE_API_URL', 'https://mock-api.example.com/Stage/');
   });
 });

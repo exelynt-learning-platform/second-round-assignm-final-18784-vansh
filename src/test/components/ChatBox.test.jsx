@@ -10,13 +10,7 @@ const makeStore = (extra = {}) =>
   configureStore({
     reducer: { chat: chatReducer },
     preloadedState: {
-      chat: {
-        sessions: { '1': { id: '1', title: 'New Chat', createdAt: 1000, messages: [] } },
-        currentSessionId: '1',
-        status: 'idle',
-        error: null,
-        ...extra,
-      },
+      chat: { messages: [], status: 'idle', error: null, ...extra },
     },
   });
 
@@ -32,7 +26,7 @@ describe('ChatBox', () => {
 
   it('renders NexusAI header', () => {
     renderApp();
-    expect(screen.getAllByText('NexusAI').length).toBeGreaterThan(0);
+    expect(screen.getByText('NexusAI')).toBeInTheDocument();
   });
 
   it('shows Online status when idle', () => {
@@ -58,40 +52,35 @@ describe('ChatBox', () => {
   it('dismisses error banner on X click', () => {
     const store = makeStore({ error: 'Some error' });
     renderApp(store);
-    // The X dismiss button is inside the error banner
     const errorBanner = screen.getByText('Some error').closest('div');
-    const dismissBtn = errorBanner.querySelector('button');
-    fireEvent.click(dismissBtn);
+    fireEvent.click(errorBanner.querySelector('button'));
     expect(store.getState().chat.error).toBeNull();
   });
 
   it('dispatches addUserMessage when send is clicked', () => {
     const store = makeStore();
     renderApp(store);
-    const textarea = screen.getByRole('textbox');
-    fireEvent.change(textarea, { target: { value: 'Test message' } });
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Test message' } });
     fireEvent.click(screen.getByTitle('Send message'));
-    const msgs = store.getState().chat.sessions['1'].messages;
-    expect(msgs.some((m) => m.content === 'Test message')).toBe(true);
+    expect(store.getState().chat.messages.some((m) => m.content === 'Test message')).toBe(true);
   });
 
-  it('shows hamburger menu button on mobile via matchMedia', () => {
-    Object.defineProperty(window, 'innerWidth', { writable: true, value: 375 });
-    // matchMedia mock returns matches:false by default so sidebar stays open
-    renderApp();
-    // sidebar New Chat button should still be present
-    expect(screen.getByText('New Chat')).toBeInTheDocument();
-  });
-
-  it('shows session title in header', () => {
-    const store = makeStore();
-    store.dispatch({ type: 'chat/addUserMessage', payload: { text: 'My first question', sessionId: '1' } });
+  it('clears messages when Clear button is clicked', () => {
+    const store = makeStore({
+      messages: [{ id: 1, role: 'user', content: 'Hi', timestamp: '10:00' }],
+    });
     renderApp(store);
-    expect(screen.getByText('My first question')).toBeInTheDocument();
+    fireEvent.click(screen.getByTitle('Clear chat'));
+    expect(store.getState().chat.messages).toHaveLength(0);
   });
 
-  it('renders sidebar with New Chat button on desktop', () => {
+  it('renders Clear button in header', () => {
     renderApp();
-    expect(screen.getByText('New Chat')).toBeInTheDocument();
+    expect(screen.getByTitle('Clear chat')).toBeInTheDocument();
+  });
+
+  it('shows textarea input area', () => {
+    renderApp();
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 });
