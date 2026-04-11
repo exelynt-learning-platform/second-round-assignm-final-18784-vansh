@@ -25,13 +25,14 @@ html, body, #root {
 /* ── Glassmorphism surfaces ─────────────────────────────────────────────── */
 .sidebar-glass {
   background: rgba(15, 15, 25, 0.85);
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
 }
 
 .glass-bubble {
   background: rgba(30, 30, 50, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.06);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
 
@@ -49,7 +50,6 @@ html, body, #root {
 .chat-scroll::-webkit-scrollbar-track { background: transparent; }
 .chat-scroll::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.2); border-radius: 10px; }
 .chat-scroll::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.4); }
-.chat-scroll { -webkit-overflow-scrolling: touch; }
 .chat-scroll * { min-width: 0; max-width: 100%; word-break: break-word; }
 .chat-scroll pre { word-break: normal; white-space: pre; overflow-x: auto; }
 
